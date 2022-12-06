@@ -1,4 +1,4 @@
-// Package pan-pingable-hosts harvests pingable IP addresses from a firewall's ARP cache
+// Package pan-pingable-hosts harvests pingable IP addresses from a Palo Alto Networks firewall's ARP cache
 package main
 
 import (
@@ -15,15 +15,12 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
 	"github.com/go-ping/ping"
 	"golang.org/x/term"
 )
-
-var wg sync.WaitGroup
 
 type ArpCache struct {
 	Entries []Interface `xml:"result>entries>entry"`
