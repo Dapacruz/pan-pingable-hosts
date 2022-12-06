@@ -39,7 +39,7 @@ func main() {
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Harvests pingable IP addresses from a firewall's ARP cache\n\n")
+		fmt.Fprintf(os.Stderr, "Harvests pingable IP addresses from a Palo Alto Networks firewall's ARP cache\n\n")
 		fmt.Fprintf(os.Stderr, "USAGE: pan-pingable-hosts [options] <firewall>\n\n")
 		fmt.Fprintf(os.Stderr, "EXAMPLES:\n")
 		fmt.Fprintf(os.Stderr, "  > pan-pingable-hosts fw01.domain.com\n")
