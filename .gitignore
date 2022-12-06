@@ -1,0 +1,4 @@
+compiled-binaries
+pan-pingable-hosts
+*.txt
+.DS_Store
