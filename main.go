@@ -18,8 +18,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/go-ping/ping"
 	"golang.org/x/term"
+)
+
+// Create objects to colorize stdout
+var (
+	green = color.New(color.FgGreen)
 )
 
 type ArpCache struct {
@@ -84,7 +90,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Fprintf(os.Stderr, "completed\n")
+	green.Fprintf(os.Stderr, "success\n")
 
 	fmt.Fprintf(os.Stderr, "Parsing ARP cache ... ")
 	// Create a map of interfaces with a slice of addresses
@@ -92,7 +98,7 @@ func main() {
 	for _, int := range arpCache.Entries {
 		interfaces[int.Name] = append(interfaces[int.Name], int.Address)
 	}
-	fmt.Fprintf(os.Stderr, "completed\n")
+	green.Fprintf(os.Stderr, "success\n")
 
 	fmt.Fprintf(os.Stderr, "Pinging IP addresses ... ")
 	// Harvest pingable addresses from each interface
@@ -100,7 +106,7 @@ func main() {
 	for _, addrs := range interfaces {
 		pingableHosts = append(pingableHosts, getPingableAddresses(addrs, numAddresses, timeout)...)
 	}
-	fmt.Fprintf(os.Stderr, "completed\n\n")
+	green.Fprintf(os.Stderr, "success\n\n")
 
 	// Sort the pingableHosts slice
 	pingableHostsSorted := make([]net.IP, 0, len(pingableHosts))
