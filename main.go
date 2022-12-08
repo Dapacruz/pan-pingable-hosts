@@ -35,6 +35,7 @@ func main() {
 	var firewall string
 	var user string
 	var numAddresses int
+	var timeout int
 	var password string
 
 	flag.Usage = func() {
@@ -48,8 +49,9 @@ func main() {
 		fmt.Fprintf(os.Stderr, "OPTIONS:\n")
 		flag.PrintDefaults()
 	}
-	flag.StringVar(&user, "u", "", "User")
+	flag.StringVar(&user, "u", "", "PAN user")
 	flag.IntVar(&numAddresses, "n", 2, "Number of addresses per interface")
+	flag.IntVar(&timeout, "t", 250, "ICMP timeout in milliseconds")
 	flag.Parse()
 
 	// Ensure the target firewall is defined, otherwise exit and display usage
@@ -62,7 +64,7 @@ func main() {
 
 	fmt.Fprintln(os.Stderr)
 	if user == "" {
-		fmt.Fprint(os.Stderr, "User: ")
+		fmt.Fprint(os.Stderr, "PAN User: ")
 		fmt.Scanln(&user)
 	}
 
@@ -75,24 +77,30 @@ func main() {
 	fmt.Fprintf(os.Stderr, "\n\n")
 
 	start := time.Now()
+	fmt.Fprintf(os.Stderr, "Downloading ARP cache from %v ... ", firewall)
 	data := getArpCache(firewall, user, password)
 	var arpCache ArpCache
 	err = xml.Unmarshal([]byte(data), &arpCache)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Fprintf(os.Stderr, "completed\n")
 
+	fmt.Fprintf(os.Stderr, "Parsing ARP cache ... ")
 	// Create a map of interfaces with a slice of addresses
 	interfaces := make(map[string][]string)
 	for _, int := range arpCache.Entries {
 		interfaces[int.Name] = append(interfaces[int.Name], int.Address)
 	}
+	fmt.Fprintf(os.Stderr, "completed\n")
 
+	fmt.Fprintf(os.Stderr, "Pinging IP addresses ... ")
 	// Harvest pingable addresses from each interface
 	var pingableHosts []string
 	for _, addrs := range interfaces {
-		pingableHosts = append(pingableHosts, getPingableAddresses(addrs, numAddresses)...)
+		pingableHosts = append(pingableHosts, getPingableAddresses(addrs, numAddresses, timeout)...)
 	}
+	fmt.Fprintf(os.Stderr, "completed\n\n")
 
 	// Sort the pingableHosts slice
 	pingableHostsSorted := make([]net.IP, 0, len(pingableHosts))
@@ -114,7 +122,7 @@ func main() {
 	fmt.Fprintf(os.Stderr, " Collection complete: Discovered %d pingable addresses in %.3f seconds\n", len(pingableHosts), elapsed.Seconds())
 }
 
-func getPingableAddresses(addrs []string, numAddrs int) []string {
+func getPingableAddresses(addrs []string, numAddrs int, timeout int) []string {
 	var pingableAddrs []string
 
 	for _, addr := range addrs {
@@ -124,7 +132,7 @@ func getPingableAddresses(addrs []string, numAddrs int) []string {
 		}
 
 		// Ping ip addr and add to pingableAddrs if a response is received
-		stats := pingAddr(addr)
+		stats := pingAddr(addr, timeout)
 		if stats.PacketLoss == 0 {
 			pingableAddrs = append(pingableAddrs, addr)
 		}
@@ -138,7 +146,7 @@ func getPingableAddresses(addrs []string, numAddrs int) []string {
 	return pingableAddrs
 }
 
-func pingAddr(addr string) *ping.Statistics {
+func pingAddr(addr string, timeout int) *ping.Statistics {
 	// ping ip addr
 
 	pinger, err := ping.NewPinger(addr)
@@ -147,7 +155,7 @@ func pingAddr(addr string) *ping.Statistics {
 	}
 
 	pinger.SetPrivileged(true)
-	pinger.Timeout = time.Duration(50 * time.Millisecond)
+	pinger.Timeout = time.Duration((time.Duration(timeout) * time.Millisecond))
 	pinger.Count = 1
 
 	err = pinger.Run()
