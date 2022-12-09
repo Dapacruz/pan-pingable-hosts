@@ -8,7 +8,7 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -33,7 +33,7 @@ type ArpCache struct {
 }
 
 type Interface struct {
-	Name string `xml:"interface"`
+	Name    string `xml:"interface"`
 	Address string `xml:"ip"`
 }
 
@@ -205,7 +205,7 @@ func getArpCache(fw string, user string, pw string) string {
 
 	defer resp.Body.Close()
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
