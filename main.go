@@ -26,6 +26,7 @@ import (
 // Create objects to colorize stdout
 var (
 	green = color.New(color.FgGreen)
+	red   = color.New(color.FgRed)
 )
 
 type ArpCache struct {
@@ -88,6 +89,7 @@ func main() {
 	var arpCache ArpCache
 	err = xml.Unmarshal([]byte(data), &arpCache)
 	if err != nil {
+		red.Fprintf(os.Stderr, "fail\n\n")
 		panic(err)
 	}
 	green.Fprintf(os.Stderr, "success\n")
@@ -183,6 +185,7 @@ func getArpCache(fw string, user string, pw string) string {
 	url := fmt.Sprintf("https://%s/api/", fw)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+		red.Fprintf(os.Stderr, "fail\n\n")
 		panic(err)
 	}
 
@@ -197,9 +200,11 @@ func getArpCache(fw string, user string, pw string) string {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		red.Fprintf(os.Stderr, "fail\n\n")
 		panic(err)
 	}
 	if resp.StatusCode != 200 {
+		red.Fprintf(os.Stderr, "fail\n\n")
 		log.Fatal(resp.Status)
 	}
 
@@ -207,6 +212,7 @@ func getArpCache(fw string, user string, pw string) string {
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
+		red.Fprintf(os.Stderr, "fail\n\n")
 		panic(err)
 	}
 
